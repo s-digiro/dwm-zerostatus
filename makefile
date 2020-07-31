@@ -13,7 +13,7 @@ include config.mk
 #INCLUDE_DIR=include
 SOURCE_DIR=src
 
-PROG_NAME=dwmstatus
+PROG_NAME=dwm-zerostatus
 SRCS=\
 dwmstatus.c
 
