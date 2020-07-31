@@ -14,6 +14,7 @@
 #include <wchar.h>
 #include <unistd.h>
 #include <time.h>
+#include <signal.h>
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 
@@ -42,6 +43,14 @@ enum resource_type {
 	FLOAT = 2
 };
 
+enum battery_status {
+	ERROR = -1,
+	DISCHARGING = 0,
+	CHARGING = 1,
+	FULL = 2,
+	UNKNOWN = 3
+};
+
 typedef struct {
 	char *name;
 	enum resource_type type;
@@ -59,6 +68,7 @@ int   getTemperature();
 int   getVolume();
 void  setStatus(Display *dpy, char *str);
 int   getWifiPercent();
+void signal_handler(int signum);
 static void load_xresources(void);
 static void resource_load(XrmDatabase db, char *name, enum resource_type rtype, void *dst);
 static void getVolblock(char *buff, int size);
@@ -68,14 +78,16 @@ static void getTempblock(char *buff, int size);
 static void getDateblock(char *buff, int size);
 static void getTimeblock(char *buff, int size);
 static void getWifiblock(char *buff, int size);
+static void getBatblock(char *buff, int size);
 
 char* vBar(int percent, int w, int h, char* fg_color, char* bg_color);
 char* hBar(int percent, int w, int h, char* fg_color, char* bg_color);
 int h2Bar(char *string, size_t size, int percent, int w, int h, char *fg_color, char *bg_color);
 int hBarBordered(char *string, size_t size, int percent, int w, int h, char *fg_color, char *bg_color, char *border_color);
-int getBatteryBar(char *string, size_t size, int w, int h);
 void percentColorGeneric(char* string, int percent, int invert);
 
+Display *dpy;
+char *status;
 
 static char divcolor[]  = "#ffffff";
 static char volcolor[]  = "#ffffff";
@@ -85,6 +97,12 @@ static char wificolor[] = "#ffffff";
 static char tempcolor[] = "#ffffff";
 static char datecolor[] = "#ffffff";
 static char timecolor[] = "#ffffff";
+static char batcolor[]  = "#ffffff";
+static char batcolorcritical[]  = "#ff0000";
+static char batcolorlow[]       = "#ff8800";
+static char batcolormoderate[]  = "#ffff00";
+static char batcolorgood[]      = "#ffff88";
+static char batcolorhigh[]      = "#00ff00";
 
 /*
  * Xresources preferences to load at startup
@@ -98,6 +116,12 @@ ResourcePref resources[] = {
 	{ "tempcolor", STRING, &tempcolor },
 	{ "datecolor", STRING, &datecolor },
 	{ "timecolor", STRING, &timecolor },
+	{ "batcolor",  STRING, &batcolor },
+	{ "batcolorcritical",  STRING, &batcolorcritical },
+	{ "batcolorlow",       STRING, &batcolorlow },
+	{ "batcolormoderate",  STRING, &batcolormoderate },
+	{ "batcolorgood",      STRING, &batcolorgood },
+	{ "batcolorhigh",      STRING, &batcolorhigh },
 };
 
 
@@ -109,8 +133,6 @@ int
 main(void)
 {
 	const int MSIZE = 1024;
-	Display *dpy;
-	char *status;
 
 	char volblock[128];
 	char cpublock[128];
@@ -120,12 +142,6 @@ main(void)
 	char batblock[128];
 	char dateblock[128];
 	char timeblock[128];
-
-
-
-
-	char bat0[256];
-
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "Cannot open display.\n");
@@ -137,18 +153,17 @@ main(void)
 		return EXIT_FAILURE;
 
 	load_xresources();
+	signal(SIGINT, signal_handler);
 	char div[32];
 	snprintf(div, sizeof(div), "^c%s^|", divcolor);
 
 	 while(1) {
-		getBatteryBar(bat0, 256, 30, 11);
-
-
 		getVolblock(volblock, sizeof(volblock));
 		//getCpublock(cpublock, sizeof(cpublock));
 		getMemblock(memblock, sizeof(memblock));
 		getWifiblock(wifiblock, sizeof(wifiblock));
 		getTempblock(tempblock, sizeof(tempblock));
+		getBatblock(batblock, sizeof(batblock));
 		getDateblock(dateblock, sizeof(dateblock));
 		getTimeblock(timeblock, sizeof(timeblock));
 
@@ -164,7 +179,7 @@ main(void)
 			 div,
 			 tempblock,
 			 div,
-			 bat0,
+			 batblock,
 			 div,
 			 dateblock,
 			 div,
@@ -174,6 +189,7 @@ main(void)
 			fprintf(stderr, "error: buffer too small %d/%d\n", MSIZE, ret);
 
 		setStatus(dpy, status);
+
 		sleep(1);
 	}
 
@@ -188,6 +204,12 @@ main(void)
 /* *******************************************************************
  * FUNCTIONS
  ******************************************************************* */
+
+void
+signal_handler(int signum)
+{
+	setStatus(dpy, status);
+}
 
 static void
 getVolblock(char *buff, int size)
@@ -232,17 +254,8 @@ getMemblock(char *buff, int size)
 	char *mem_bar;
 
 	mem_percent = getMemPercent();
-	mem_bar = hBar(mem_percent, 20, 9,	"#FF0000", "#444444");
 
-	snprintf(
-		buff,
-		size,
-		"^c%s^ ^f1^%s^f20^",
-		memcolor,
-		mem_bar,
-		memcolor
-	);
-	free(mem_bar);
+	snprintf(buff, size, "^c%s^ %d%c", memcolor, mem_percent, '%');
 }
 
 static void
@@ -250,7 +263,7 @@ getWifiblock(char *buff, int size)
 {
 	int wifi = getWifiPercent();
 
-	snprintf(buff, size, "^c%s^ %d", wificolor, wifi);
+	snprintf(buff, size, "^c%s^ %d%c", wificolor, wifi, '%');
 }
 
 static void
@@ -258,6 +271,46 @@ getTempblock(char *buff, int size)
 {
 	int temp = getTemperature();
 	snprintf(buff, size, "^c%s^ %d°C", tempcolor, temp);
+}
+
+static void
+getBatblock(char *buff, int size)
+{
+	int percent = getBattery();
+	int status = getBatteryStatus();
+	char icon[4];
+	char *color = NULL;
+
+	if (percent >= 85) {
+		strncpy(icon, "", sizeof(icon));
+	} else if (percent >= 60) {
+		strncpy(icon, "", sizeof(icon));
+	} else if (percent >= 35) {
+		strncpy(icon, "", sizeof(icon));
+	} else if (percent >= 10) {
+		strncpy(icon, "", sizeof(icon));
+	} else {
+		strncpy(icon, "", sizeof(icon));
+	}
+
+	if (status == DISCHARGING) {
+		if (percent < 20) {
+			color = batcolorcritical;
+		} else if (percent < 40) {
+			color = batcolorlow;
+		} else if (percent < 60) {
+			color = batcolormoderate;
+		} else if (percent < 85) {
+			color = batcolorgood;
+		} else {
+			color = batcolorhigh;
+		}
+	} else {
+		color = batcolor;
+	}
+
+	snprintf(buff, size, "^c%s^%s %d%c", color, icon, percent, '%');
+
 }
 
 static void
@@ -407,26 +460,6 @@ void percentColor(char* string, int percent)
 	percentColorGeneric(string, percent, 0);
 }
 
-int getBatteryBar(char *string, size_t size, int w, int h)
-{
-	int percent = getBattery();
-
-	char *bg_color = "#444444";
-	char *border_color = "#EEEEEE";
-	char fg_color[8];
-	if(getBatteryStatus())
-		memcpy(fg_color, border_color, 8);
-	else
-		percentColor(fg_color, percent);
-
-	char tmp[128];
-	hBarBordered(tmp, 128, percent, w -2, h, fg_color, bg_color, border_color);
-
-	char *format = "%s^c%s^^f%d^^r0,%d,%d,%d^^f%d^";
-	int y = (BAR_HEIGHT - 5)/2;
-	return snprintf(string, size, format, tmp, border_color, w - 2, y, 2, 5, 2);
-}
-
 int
 getBattery()
 {
@@ -456,26 +489,33 @@ getBattery()
 	return ((float)energy_now	/ (float)energy_full) * 100;
 }
 
-/**
- * Return 0 if the battery is discharing, 1 if it's full or is
- * charging, -1 if an error occured.
- **/
-int
+enum battery_status
 getBatteryStatus()
 {
+	enum battery_status ret = UNKNOWN;
 	FILE *fd;
 	char first_letter;
 
-	if( NULL == (fd = fopen(BAT_STATUS_FILE, "r")))
-		return -1;
+	if( NULL == (fd = fopen(BAT_STATUS_FILE, "r"))) {
+		ret = ERROR;
+	}
 
 	fread(&first_letter, sizeof(char), 1, fd);
 	fclose(fd);
 
-	if(first_letter == 'D')
-		return 0;
+	switch (first_letter) {
+	case 'D':
+		ret = DISCHARGING;
+		break;
+	case 'C':
+		ret = CHARGING;
+		break;
+	case 'F':
+		ret = FULL;
+		break;
+	}
 
-	return 1;
+	return ret;
 }
 
 int
