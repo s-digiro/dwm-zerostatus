@@ -177,7 +177,9 @@ main(void)
 		int ret = snprintf(
 			 status,
 			 MSIZE,
-			 "  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  ",
+			 "  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  ",
+			 nowplayingblock,
+			 div,
 			 volblock,
 			 div,
 			 memblock,
@@ -221,14 +223,15 @@ getNowplayingblock(char *buff, int size)
 
 	if (fp != NULL) {
 		fgets(fbuff, sizeof(fbuff), fp);
-		if (strncmp(fbuff, "[PAUSED]", 8)) {
+		if (strncmp(fbuff, "[PAUSED]", 8) == 0) {
 			strncpy(icon, "", sizeof(icon));
+			snprintf(buff, size, "^c%s^%s %s", nowplayingcolor, icon, fbuff + 8);
 		} else {
 			strncpy(icon, "", sizeof(icon));
+			snprintf(buff, size, "^c%s^%s %s", nowplayingcolor, icon, fbuff);
 		}
-		snprintf(buff, size, "%s %s", icon, fbuff);
 	} else {
-		snprintf(buff, size, "-");
+		snprintf(buff, size, "^c%s^-", nowplayingcolor);
 	}
 }
 
