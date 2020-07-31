@@ -164,7 +164,8 @@ main(void)
 	snprintf(div, sizeof(div), "^c%s^|", divcolor);
 
 	 while(1) {
-		getVolblock(volblock, sizeof(volblock));
+		getNowplayingblock(nowplayingblock, sizeof(nowplayingblock));
+		//getVolblock(volblock, sizeof(volblock));
 		//getCpublock(cpublock, sizeof(cpublock));
 		getMemblock(memblock, sizeof(memblock));
 		getWifiblock(wifiblock, sizeof(wifiblock));
@@ -172,15 +173,12 @@ main(void)
 		getBatblock(batblock, sizeof(batblock));
 		getDateblock(dateblock, sizeof(dateblock));
 		getTimeblock(timeblock, sizeof(timeblock));
-		getNowplayingblock(nowplayingblock, sizeof(nowplayingblock));
 
 		int ret = snprintf(
 			 status,
 			 MSIZE,
-			 "  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  ",
+			 "  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  ",
 			 nowplayingblock,
-			 div,
-			 volblock,
 			 div,
 			 memblock,
 			 div,
