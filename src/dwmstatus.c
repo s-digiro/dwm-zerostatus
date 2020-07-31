@@ -34,6 +34,8 @@
 #define TEMP_SENSOR_FILE "/sys/class/hwmon/hwmon2/temp1_input"
 #define MEMINFO_FILE "/proc/meminfo"
 
+#define NOWPLAYING_FILE "/tmp/foonp.txt"
+
 #define LENGTH(X) (sizeof X / sizeof X[0])
 
 /* Xresources preferences */
@@ -79,6 +81,7 @@ static void getDateblock(char *buff, int size);
 static void getTimeblock(char *buff, int size);
 static void getWifiblock(char *buff, int size);
 static void getBatblock(char *buff, int size);
+static void getNowplayingblock(char *buff, int size);
 
 char* vBar(int percent, int w, int h, char* fg_color, char* bg_color);
 char* hBar(int percent, int w, int h, char* fg_color, char* bg_color);
@@ -97,6 +100,7 @@ static char wificolor[] = "#ffffff";
 static char tempcolor[] = "#ffffff";
 static char datecolor[] = "#ffffff";
 static char timecolor[] = "#ffffff";
+static char nowplayingcolor[] = "#ffffff";
 static char batcolor[]  = "#ffffff";
 static char batcolorcritical[]  = "#ff0000";
 static char batcolorlow[]       = "#ff8800";
@@ -116,6 +120,7 @@ ResourcePref resources[] = {
 	{ "tempcolor", STRING, &tempcolor },
 	{ "datecolor", STRING, &datecolor },
 	{ "timecolor", STRING, &timecolor },
+	{ "nowplayingcolor", STRING, &nowplayingcolor },
 	{ "batcolor",  STRING, &batcolor },
 	{ "batcolorcritical",  STRING, &batcolorcritical },
 	{ "batcolorlow",       STRING, &batcolorlow },
@@ -142,6 +147,7 @@ main(void)
 	char batblock[128];
 	char dateblock[128];
 	char timeblock[128];
+	char nowplayingblock[128];
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "Cannot open display.\n");
@@ -166,6 +172,7 @@ main(void)
 		getBatblock(batblock, sizeof(batblock));
 		getDateblock(dateblock, sizeof(dateblock));
 		getTimeblock(timeblock, sizeof(timeblock));
+		getNowplayingblock(nowplayingblock, sizeof(nowplayingblock));
 
 		int ret = snprintf(
 			 status,
@@ -204,6 +211,26 @@ main(void)
 /* *******************************************************************
  * FUNCTIONS
  ******************************************************************* */
+
+static void
+getNowplayingblock(char *buff, int size)
+{
+	char fbuff[128];
+	FILE *fp = fopen(NOWPLAYING_FILE, "r");
+	char icon[4] = "";
+
+	if (fp != NULL) {
+		fgets(fbuff, sizeof(fbuff), fp);
+		if (strncmp(fbuff, "[PAUSED]", 8)) {
+			strncpy(icon, "", sizeof(icon));
+		} else {
+			strncpy(icon, "", sizeof(icon));
+		}
+		snprintf(buff, size, "%s %s", icon, fbuff);
+	} else {
+		snprintf(buff, size, "-");
+	}
+}
 
 void
 signal_handler(int signum)
@@ -251,7 +278,6 @@ static void
 getMemblock(char *buff, int size)
 {
 	int mem_percent;
-	char *mem_bar;
 
 	mem_percent = getMemPercent();
 
