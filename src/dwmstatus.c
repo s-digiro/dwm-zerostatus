@@ -164,8 +164,8 @@ main(void)
 	snprintf(div, sizeof(div), "^c%s^|", divcolor);
 
 	 while(1) {
-		getNowplayingblock(nowplayingblock, sizeof(nowplayingblock));
-		//getVolblock(volblock, sizeof(volblock));
+		//getNowplayingblock(nowplayingblock, sizeof(nowplayingblock));
+		getVolblock(volblock, sizeof(volblock));
 		//getCpublock(cpublock, sizeof(cpublock));
 		getMemblock(memblock, sizeof(memblock));
 		getWifiblock(wifiblock, sizeof(wifiblock));
@@ -178,7 +178,7 @@ main(void)
 			 status,
 			 MSIZE,
 			 "  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  ",
-			 nowplayingblock,
+			 volblock,
 			 div,
 			 memblock,
 			 div,
