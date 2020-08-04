@@ -177,7 +177,7 @@ main(void)
 		int ret = snprintf(
 			 status,
 			 MSIZE,
-			 "  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  ",
+			 "%s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  ",
 			 volblock,
 			 div,
 			 memblock,
@@ -215,9 +215,9 @@ main(void)
 static void
 getNowplayingblock(char *buff, int size)
 {
-	char fbuff[128];
+	char fbuff[256];
 	FILE *fp = fopen(NOWPLAYING_FILE, "r");
-	char icon[4] = "";
+	char icon[8] = "";
 
 	if (fp != NULL) {
 		fgets(fbuff, sizeof(fbuff), fp);
