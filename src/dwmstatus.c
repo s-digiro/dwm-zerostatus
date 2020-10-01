@@ -31,7 +31,7 @@
 #define BAT_FULL_FILE "/sys/class/power_supply/BAT0/energy_full"
 #define BAT_STATUS_FILE "/sys/class/power_supply/BAT0/status"
 
-#define TEMP_SENSOR_FILE "/sys/class/hwmon/hwmon2/temp1_input"
+#define TEMP_SENSOR_FILE "/sys/class/hwmon/hwmon5/temp1_input"
 #define MEMINFO_FILE "/proc/meminfo"
 
 #define NOWPLAYING_FILE "/tmp/foonp.txt"
