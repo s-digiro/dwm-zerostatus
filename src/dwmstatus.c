@@ -177,7 +177,7 @@ main(void)
 		int ret = snprintf(
 			 status,
 			 MSIZE,
-			 "%s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  %s  ",
+			 "%s %s %s %s %s %s %s %s %s %s %s %s %s ",
 			 volblock,
 			 div,
 			 memblock,
