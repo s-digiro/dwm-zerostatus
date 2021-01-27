@@ -82,6 +82,7 @@ static void getTimeblock(char *buff, int size);
 static void getWifiblock(char *buff, int size);
 static void getBatblock(char *buff, int size);
 static void getNowplayingblock(char *buff, int size);
+static void getFlipflopblock(char *buff, int size);
 
 char* vBar(int percent, int w, int h, char* fg_color, char* bg_color);
 char* hBar(int percent, int w, int h, char* fg_color, char* bg_color);
@@ -107,6 +108,7 @@ static char batcolorlow[]       = "#ff8800";
 static char batcolormoderate[]  = "#ffff00";
 static char batcolorgood[]      = "#ffff88";
 static char batcolorhigh[]      = "#00ff00";
+static char flipfloppercolor[]  = "#ffffff";
 
 /*
  * Xresources preferences to load at startup
@@ -127,6 +129,7 @@ ResourcePref resources[] = {
 	{ "batcolormoderate",  STRING, &batcolormoderate },
 	{ "batcolorgood",      STRING, &batcolorgood },
 	{ "batcolorhigh",      STRING, &batcolorhigh },
+	{ "flipfloppercolor",  STRING, &flipfloppercolor },
 };
 
 
@@ -148,6 +151,7 @@ main(void)
 	char dateblock[128];
 	char timeblock[128];
 	char nowplayingblock[128];
+	char flipflopblock[128];
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "Cannot open display.\n");
@@ -173,11 +177,14 @@ main(void)
 		getBatblock(batblock, sizeof(batblock));
 		getDateblock(dateblock, sizeof(dateblock));
 		getTimeblock(timeblock, sizeof(timeblock));
+		getFlipflopblock(flipflopblock, sizeof(flipflopblock));
 
 		int ret = snprintf(
 			 status,
 			 MSIZE,
-			 "%s %s %s %s %s %s %s %s %s %s %s %s %s ",
+			 "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s ",
+			 flipflopblock,
+			 div,
 			 volblock,
 			 div,
 			 memblock,
@@ -211,6 +218,19 @@ main(void)
 /* *******************************************************************
  * FUNCTIONS
  ******************************************************************* */
+
+int flipflop = 0;
+
+static void
+getFlipflopblock(char *buff, int size)
+{
+	flipflop = !flipflop;
+	if (flipflop) {
+		snprintf(buff, size, "^c%s^<", flipfloppercolor);
+	} else {
+		snprintf(buff, size, "^c%s^>", flipfloppercolor);
+	}
+}
 
 static void
 getNowplayingblock(char *buff, int size)
