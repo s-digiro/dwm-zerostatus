@@ -182,9 +182,8 @@ main(void)
 		int ret = snprintf(
 			 status,
 			 MSIZE,
-			 "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s ",
+			 "%s %s %s %s %s %s %s %s %s %s %s %s %s ",
 			 flipflopblock,
-			 div,
 			 volblock,
 			 div,
 			 memblock,
@@ -196,7 +195,6 @@ main(void)
 			 batblock,
 			 div,
 			 dateblock,
-			 div,
 			 timeblock
 		 );
 		if(ret >= MSIZE)

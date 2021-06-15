@@ -44,4 +44,4 @@ mrproper:
 	rm -rf *.o *~ \#*\# ${PROG_NAME}
 
 clean:
-	rm -rf *.o
+	rm -rf *.o ${PROG_NAME}
