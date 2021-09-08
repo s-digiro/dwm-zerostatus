@@ -261,7 +261,7 @@ static void
 getVolblock(char *buff, int size)
 {
 	int volume = getVolume();
-	snprintf(buff, size, "^c%s^ %d%c", volcolor, volume, '%');
+	snprintf(buff, size, "^c%s^  %d%c", volcolor, volume, '%');
 }
 
 static void
@@ -300,7 +300,7 @@ getMemblock(char *buff, int size)
 
 	mem_percent = getMemPercent();
 
-	snprintf(buff, size, "^c%s^ %d%c", memcolor, mem_percent, '%');
+	snprintf(buff, size, "^c%s^  %d%c", memcolor, mem_percent, '%');
 }
 
 static void
@@ -308,7 +308,7 @@ getWifiblock(char *buff, int size)
 {
 	int wifi = getWifiPercent();
 
-	snprintf(buff, size, "^c%s^ %d%c", wificolor, wifi, '%');
+	snprintf(buff, size, "^c%s^  %d%c", wificolor, wifi, '%');
 }
 
 static void
@@ -354,7 +354,7 @@ getBatblock(char *buff, int size)
 		color = batcolor;
 	}
 
-	snprintf(buff, size, "^c%s^%s %d%c", color, icon, percent, '%');
+	snprintf(buff, size, "^c%s^%s  %d%c", color, icon, percent, '%');
 
 }
 
