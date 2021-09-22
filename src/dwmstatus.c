@@ -272,6 +272,8 @@ getNowplayingblock(char *buff, int size)
 	} else {
 		snprintf(buff, size, "^c%s^mpc not found", nowplayingcolor);
 	}
+
+	pclose(fp);
 }
 
 void
