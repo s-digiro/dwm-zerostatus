@@ -31,7 +31,7 @@
 #define BAT_FULL_FILE "/sys/class/power_supply/BAT0/energy_full"
 #define BAT_STATUS_FILE "/sys/class/power_supply/BAT0/status"
 
-#define TEMP_SENSOR_FILE "/sys/class/hwmon/hwmon5/temp1_input"
+#define TEMP_SENSOR_FILE "/tmp/temp.txt"
 #define MEMINFO_FILE "/proc/meminfo"
 
 #define NOWPLAYING_FILE "/tmp/foonp.txt"
@@ -168,7 +168,7 @@ main(void)
 	snprintf(div, sizeof(div), "^c%s^|", divcolor);
 
 	 while(1) {
-		//getNowplayingblock(nowplayingblock, sizeof(nowplayingblock));
+		getNowplayingblock(nowplayingblock, sizeof(nowplayingblock));
 		getVolblock(volblock, sizeof(volblock));
 		//getCpublock(cpublock, sizeof(cpublock));
 		getMemblock(memblock, sizeof(memblock));
@@ -182,8 +182,10 @@ main(void)
 		int ret = snprintf(
 			 status,
 			 MSIZE,
-			 "%s %s %s %s %s %s %s %s %s %s %s %s %s ",
-			 flipflopblock,
+			 "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s ",
+			 div,
+			 nowplayingblock,
+			 div,
 			 volblock,
 			 div,
 			 memblock,
@@ -234,20 +236,41 @@ static void
 getNowplayingblock(char *buff, int size)
 {
 	char fbuff[256];
-	FILE *fp = fopen(NOWPLAYING_FILE, "r");
+	FILE *fp = popen("/bin/mpc", "r");
 	char icon[8] = "";
+	char track[256] = "";
 
 	if (fp != NULL) {
-		fgets(fbuff, sizeof(fbuff), fp);
-		if (strncmp(fbuff, "[PAUSED]", 8) == 0) {
-			strncpy(icon, "", sizeof(icon));
-			snprintf(buff, size, "^c%s^%s %s", nowplayingcolor, icon, fbuff + 8);
+		if (fgets(fbuff, sizeof(fbuff), fp) != NULL) {
+			if (strncmp("volume", fbuff, strlen("volume")) == 0) {
+				snprintf(buff, size, "^c%s^ﱙ", nowplayingcolor);
+				return;
+			} else {
+				snprintf(track, sizeof(track), "%s", fbuff);
+			}
 		} else {
-			strncpy(icon, "", sizeof(icon));
-			snprintf(buff, size, "^c%s^%s %s", nowplayingcolor, icon, fbuff);
+			snprintf(buff, size, "^c%s^ﱙ", nowplayingcolor);
+			return;
 		}
+
+		if (fgets(fbuff, sizeof(fbuff), fp) != NULL) {
+			if (strncmp("[paused]", fbuff, strlen("[paused]")) == 0) {
+				snprintf(icon, sizeof(icon), "");
+			} else if (strncmp("[playing]", fbuff, strlen("[playing]")) == 0) {
+				snprintf(icon, sizeof(icon), "ﱘ");
+			} else {
+				snprintf(buff, size, "^c%s^ﱙ", nowplayingcolor);
+				return;
+			}
+		} else {
+			snprintf(buff, size, "^c%s^ﱙ", nowplayingcolor);
+			return;
+		}
+
+		track[strlen(track) - 1] = '\0';
+		snprintf(buff, size, "^c%s^%s  %s", nowplayingcolor, icon, track);
 	} else {
-		snprintf(buff, size, "^c%s^-", nowplayingcolor);
+		snprintf(buff, size, "^c%s^mpc not found", nowplayingcolor);
 	}
 }
 
@@ -722,16 +745,17 @@ int
 getTemperature()
 {
 	int temp;
+	system("temp > /tmp/temp.txt");
 	FILE *fd = fopen(TEMP_SENSOR_FILE, "r");
 	if(fd == NULL)
 		{
-			fprintf(stderr, "Error opening temp1_input.\n");
+			fprintf(stderr, "Error opening %s\n", TEMP_SENSOR_FILE);
 			return -1;
 		}
 	fscanf(fd, "%d", &temp);
 	fclose(fd);
 
-	return temp / 1000;
+	return temp;
 }
 
 int
