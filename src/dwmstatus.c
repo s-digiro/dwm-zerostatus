@@ -244,12 +244,14 @@ getNowplayingblock(char *buff, int size)
 		if (fgets(fbuff, sizeof(fbuff), fp) != NULL) {
 			if (strncmp("volume", fbuff, strlen("volume")) == 0) {
 				snprintf(buff, size, "^c%s^ﱙ", nowplayingcolor);
+				pclose(fp);
 				return;
 			} else {
 				snprintf(track, sizeof(track), "%s", fbuff);
 			}
 		} else {
 			snprintf(buff, size, "^c%s^ﱙ", nowplayingcolor);
+			pclose(fp);
 			return;
 		}
 
@@ -260,10 +262,12 @@ getNowplayingblock(char *buff, int size)
 				snprintf(icon, sizeof(icon), "ﱘ");
 			} else {
 				snprintf(buff, size, "^c%s^ﱙ", nowplayingcolor);
+				pclose(fp);
 				return;
 			}
 		} else {
 			snprintf(buff, size, "^c%s^ﱙ", nowplayingcolor);
+			pclose(fp);
 			return;
 		}
 
